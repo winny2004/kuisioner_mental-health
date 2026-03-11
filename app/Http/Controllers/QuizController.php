@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Question;
 use App\Models\Answer;
 use App\Models\QuizResult;
+use App\Services\FlaskApiService;
 
 class QuizController extends Controller
 {
@@ -60,7 +61,7 @@ class QuizController extends Controller
             );
         }
 
-        // Calculate category based on percentage of max possible score
+        // Calculate category based on percentage of max possible score (fallback)
         $percentage = ($totalScore / $maxScore) * 100;
 
         if ($percentage >= 75) {
@@ -74,14 +75,50 @@ class QuizController extends Controller
             $feedback = 'Kondisi ' . $this->getTypeLabel($type) . ' Anda perlu ditingkatkan. Jangan menyerah!';
         }
 
+        // Get Flask API prediction for family_social quiz
+        $predictionData = null;
+        $aiPrediction = null;
+
+        if ($type === 'family_social') {
+            try {
+                $flaskService = new FlaskApiService();
+                $quizData = $flaskService->transformQuizData($request->answers, $questions);
+                $predictionResult = $flaskService->predictMentalHealth($quizData);
+
+                if ($predictionResult['success']) {
+                    $predictionData = $predictionResult['data'];
+                    $aiPrediction = $predictionData['prediction'] ?? null;
+
+                    // Translate AI prediction to Indonesian for category
+                    $categoryMap = [
+                        'Normal' => 'Normal',
+                        'Depression' => 'Depresi',
+                        'Anxiety' => 'Cemas',
+                        'Stress' => 'Stres'
+                    ];
+
+                    if ($aiPrediction && isset($categoryMap[$aiPrediction])) {
+                        $category = $categoryMap[$aiPrediction];
+                    }
+
+                    // Override feedback with AI prediction
+                    $feedback = $this->generateAIFeedback($predictionData);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Flask API Error: ' . $e->getMessage());
+                // Continue with default feedback if API fails
+            }
+        }
+
         // Save quiz result
-        QuizResult::create([
+        $result = QuizResult::create([
             'user_id' => Auth::id(),
             'quiz_type' => $type,
             'total_score' => $totalScore,
             'max_score' => $maxScore,
             'category' => $category,
             'feedback' => $feedback,
+            'prediction_data' => $predictionData,
             'completed_at' => now(),
         ]);
 
@@ -100,49 +137,50 @@ class QuizController extends Controller
             return redirect()->route('quiz.index');
         }
 
-        // Get section breakdown for family_social quiz
+        // Get section breakdown for self_efficacy quiz only
+        // For family_social, we use AI prediction data instead
         $sectionBreakdown = null;
-        if ($type === 'family_social') {
+        if ($type === 'self_efficacy') {
             $questions = Question::byType($type)->active()->ordered()->get();
             $userAnswers = Answer::where('user_id', Auth::id())
                 ->whereIn('question_id', $questions->pluck('id'))
                 ->get()
                 ->keyBy('question_id');
 
-            $familySocialQuestions = $questions->where('scale_type', 'likert_5');
-            $dass21Questions = $questions->where('scale_type', 'dass21');
+            $selfEfficacyQuestions = $questions->where('scale_type', 'likert_4');
+            $wellBeingQuestions = $questions->where('scale_type', 'likert_7');
 
-            $familySocialScore = 0;
-            $familySocialMax = 0;
-            $dass21Score = 0;
-            $dass21Max = 0;
+            $selfEfficacyScore = 0;
+            $selfEfficacyMax = 0;
+            $wellBeingScore = 0;
+            $wellBeingMax = 0;
 
-            foreach ($familySocialQuestions as $question) {
-                $familySocialMax += $question->getMaxScore();
+            foreach ($selfEfficacyQuestions as $question) {
+                $selfEfficacyMax += $question->getMaxScore();
                 if (isset($userAnswers[$question->id])) {
-                    $familySocialScore += $userAnswers[$question->id]->score;
+                    $selfEfficacyScore += $userAnswers[$question->id]->score;
                 }
             }
 
-            foreach ($dass21Questions as $question) {
-                $dass21Max += $question->getMaxScore();
+            foreach ($wellBeingQuestions as $question) {
+                $wellBeingMax += $question->getMaxScore();
                 if (isset($userAnswers[$question->id])) {
-                    $dass21Score += $userAnswers[$question->id]->score;
+                    $wellBeingScore += $userAnswers[$question->id]->score;
                 }
             }
 
             $sectionBreakdown = [
-                'family_social' => [
-                    'score' => $familySocialScore,
-                    'max' => $familySocialMax,
-                    'percentage' => $familySocialMax > 0 ? ($familySocialScore / $familySocialMax) * 100 : 0,
-                    'count' => $familySocialQuestions->count(),
+                'self_efficacy' => [
+                    'score' => $selfEfficacyScore,
+                    'max' => $selfEfficacyMax,
+                    'percentage' => $selfEfficacyMax > 0 ? ($selfEfficacyScore / $selfEfficacyMax) * 100 : 0,
+                    'count' => $selfEfficacyQuestions->count(),
                 ],
-                'dass21' => [
-                    'score' => $dass21Score,
-                    'max' => $dass21Max,
-                    'percentage' => $dass21Max > 0 ? ($dass21Score / $dass21Max) * 100 : 0,
-                    'count' => $dass21Questions->count(),
+                'well_being' => [
+                    'score' => $wellBeingScore,
+                    'max' => $wellBeingMax,
+                    'percentage' => $wellBeingMax > 0 ? ($wellBeingScore / $wellBeingMax) * 100 : 0,
+                    'count' => $wellBeingQuestions->count(),
                 ],
             ];
         }
@@ -166,5 +204,35 @@ class QuizController extends Controller
             'self_efficacy' => 'Self Efficacy',
             default => 'Kuisioner',
         };
+    }
+
+    /**
+     * Generate feedback based on AI prediction
+     */
+    private function generateAIFeedback($predictionData)
+    {
+        $prediction = $predictionData['prediction'] ?? 'Unknown';
+        $manualCalc = $predictionData['manual_calculation'] ?? 'Unknown';
+        $scores = $predictionData['scores'] ?? [];
+
+        $feedback = "Berdasarkan analisis AI, kondisi mental health Anda terdeteksi: **{$prediction}**.\n\n";
+
+        // Add detailed information based on prediction
+        switch ($prediction) {
+            case 'Normal':
+                $feedback .= "Kondisi mental Anda berada dalam kategori normal. Pertahankan pola hidup sehat dan dukungan sosial yang baik!";
+                break;
+            case 'Depression':
+                $feedback .= "Terdeteksi indikasi gejala depresi. Jangan ragu untuk mencari bantuan profesional. Anda tidak sendirian.";
+                break;
+            case 'Anxiety':
+                $feedback .= "Terdeteksi indikasi gejala kecemasan. Teknik relaksasi dan meditasi dapat membantu. Konsultasikan dengan profesional jika diperlukan.";
+                break;
+            case 'Stress':
+                $feedback .= "Terdeteksi tingkat stres yang perlu diperhatikan. Luangkan waktu untuk self-care dan aktivitas yang menenangkan.";
+                break;
+        }
+
+        return $feedback;
     }
 }

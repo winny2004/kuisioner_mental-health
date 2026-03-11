@@ -16,27 +16,64 @@
         <!-- Score Card -->
         <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
             <div class="text-center">
-                <div class="text-6xl mb-4">
-                    {{ $result->category === 'tinggi' ? '🎉' : ($result->category === 'sedang' ? '👍' : '💪') }}
-                </div>
-                <div class="mb-6">
-                    <p class="text-gray-600 mb-2">Skor Total Anda</p>
-                    <p class="text-5xl font-bold text-blue-700">
-                        {{ $result->total_score }} / {{ $result->max_score }}
-                    </p>
-                </div>
+                @if($type === 'family_social' && $result->prediction_data)
+                    <!-- AI-based category display -->
+                    @php
+                        $prediction = $result->prediction_data['prediction'] ?? 'Unknown';
+                        $emoji = match($prediction) {
+                            'Normal' => '😊',
+                            'Depression' => '😔',
+                            'Anxiety' => '😰',
+                            'Stress' => '😓',
+                            default => '📊'
+                        };
+                        $badgeColor = match($prediction) {
+                            'Normal' => 'bg-green-100 text-green-700',
+                            'Depression' => 'bg-blue-100 text-blue-700',
+                            'Anxiety' => 'bg-yellow-100 text-yellow-700',
+                            'Stress' => 'bg-red-100 text-red-700',
+                            default => 'bg-gray-100 text-gray-700'
+                        };
+                        $predictionId = match($prediction) {
+                            'Normal' => 'Normal',
+                            'Depression' => 'Depresi',
+                            'Anxiety' => 'Cemas',
+                            'Stress' => 'Stres',
+                            default => $prediction
+                        };
+                    @endphp
+                    <div class="text-6xl mb-4">{{ $emoji }}</div>
+                    <div class="mb-6">
+                        <p class="text-gray-600 mb-2">Hasil Analisis AI</p>
+                        <p class="text-4xl font-bold text-purple-700">{{ $predictionId }}</p>
+                    </div>
+                    <div class="mb-8">
+                        <span class="inline-block px-8 py-3 rounded-full text-2xl font-bold {{ $badgeColor }}">
+                            {{ $predictionId }}
+                        </span>
+                    </div>
+                @else
+                    <!-- Traditional category display -->
+                    <div class="text-6xl mb-4">
+                        {{ $result->category === 'tinggi' ? '🎉' : ($result->category === 'sedang' ? '👍' : '💪') }}
+                    </div>
+                    <div class="mb-6">
+                        <p class="text-gray-600 mb-2">Skor Total Anda</p>
+                        <p class="text-5xl font-bold text-blue-700">
+                            {{ $result->total_score }} / {{ $result->max_score }}
+                        </p>
+                    </div>
+                    <div class="mb-8">
+                        <span class="inline-block px-8 py-3 rounded-full text-2xl font-bold
+                            {{ $result->category === 'tinggi' ? 'bg-green-100 text-green-700'
+                                : ($result->category === 'sedang' ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-red-100 text-red-700') }}">
+                            {{ $result->category === 'tinggi' ? 'Tinggi' : ($result->category === 'sedang' ? 'Sedang' : 'Rendah') }}
+                        </span>
+                    </div>
+                @endif
 
-                <div class="mb-8">
-                    <p class="text-gray-600 mb-2">Kategori</p>
-                    <span class="inline-block px-8 py-3 rounded-full text-2xl font-bold
-                        {{ $result->category === 'tinggi' ? 'bg-green-100 text-green-700'
-                            : ($result->category === 'sedang' ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700') }}">
-                        {{ $result->getCategoryLabel() }}
-                    </span>
-                </div>
-
-                @if($sectionBreakdown)
+                @if($sectionBreakdown && $type !== 'family_social')
                     <!-- Section Breakdown -->
                     <div class="mb-8">
                         <h3 class="text-lg font-bold text-gray-700 mb-4">Rincian per Bagian</h3>
@@ -64,6 +101,120 @@
                                     <div class="bg-green-500 h-2 rounded-full" style="width: {{ $sectionBreakdown['dass21']['percentage'] }}%"></div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                @endif
+
+                @if($result->prediction_data)
+                    <!-- AI Prediction Section -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-bold text-gray-700 mb-4">🤖 Analisis AI</h3>
+                        <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-200">
+                            <div class="text-center mb-4">
+                                <p class="text-gray-600 mb-2">Prediksi Mental Health</p>
+                                <p class="text-3xl font-bold text-purple-700">
+                                    {{ $result->prediction_data['prediction'] ?? 'N/A' }}
+                                </p>
+                            </div>
+
+                            @if(isset($result->prediction_data['confidence']))
+                                <div class="mb-4">
+                                    <p class="text-sm text-gray-600 mb-2">Confidence Scores:</p>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        @foreach($result->prediction_data['confidence'] as $label => $confidence)
+                                            <div class="bg-white rounded-lg p-2 text-center">
+                                                <p class="text-xs text-gray-600">{{ $label }}</p>
+                                                <p class="text-lg font-bold text-purple-700">{{ $confidence }}</p>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if(isset($result->prediction_data['scores']))
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <!-- MSPSS Scores -->
+                                    <div class="bg-white rounded-lg p-4">
+                                        <p class="text-sm font-bold text-blue-700 mb-2">Skor MSPSS</p>
+                                        <div class="space-y-1">
+                                            @foreach($result->prediction_data['scores']['MSPSS'] ?? [] as $key => $value)
+                                                @php
+                                                    $keyTranslated = match($key) {
+                                                        'Significant_Other' => 'Significant Other',
+                                                        'Family' => 'Keluarga',
+                                                        'Friends' => 'Teman',
+                                                        'Total' => 'Total',
+                                                        default => str_replace('_', ' ', $key)
+                                                    };
+                                                @endphp
+                                                <div class="flex justify-between">
+                                                    <span class="text-sm text-gray-600">{{ $keyTranslated }}</span>
+                                                    <span class="text-sm font-bold text-blue-700">{{ $value }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+
+                                    <!-- DASS-21 Scores -->
+                                    <div class="bg-white rounded-lg p-4">
+                                        <p class="text-sm font-bold text-green-700 mb-2">Skor DASS-21</p>
+                                        <div class="space-y-2">
+                                            @if(isset($result->prediction_data['categories']))
+                                                @foreach($result->prediction_data['categories'] as $condition => $data)
+                                                    <?php
+                                                    // Translate condition names to Indonesian
+                                                    $conditionId = match($condition) {
+                                                        'Depression' => 'Depresi',
+                                                        'Anxiety' => 'Cemas',
+                                                        'Stress' => 'Stres',
+                                                        default => $condition
+                                                    };
+                                                    ?>
+                                                    <div class="border-b pb-2 last:border-0">
+                                                        <div class="flex justify-between items-center">
+                                                            <span class="text-sm text-gray-600">{{ $conditionId }}</span>
+                                                            <div class="text-right">
+                                                                <span class="text-lg font-bold text-green-700">{{ $data['score'] }}</span>
+                                                                <span class="text-xs text-gray-500 ml-1">
+                                                                    / 42
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="mt-1">
+                                                            <span class="inline-block px-2 py-1 text-xs rounded
+                                                                {{ $data['category_en'] === 'Normal' ? 'bg-green-100 text-green-700'
+                                                                    : ($data['category_en'] === 'Mild' ? 'bg-yellow-100 text-yellow-700'
+                                                                    : ($data['category_en'] === 'Moderate' ? 'bg-orange-100 text-orange-700'
+                                                                    : ($data['category_en'] === 'Severe' ? 'bg-red-100 text-red-700'
+                                                                    : 'bg-red-200 text-red-800'))) }}">
+                                                                {{ $data['category_id'] }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                                @if(isset($result->prediction_data['scores']['DASS_21']['Total']))
+                                                <div class="mt-2 pt-2 border-t">
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-sm font-bold text-gray-700">Total DASS</span>
+                                                        <span class="text-sm">
+                                                            {{ $result->prediction_data['scores']['DASS_21']['Total'] }}
+                                                            / {{ $result->prediction_data['scores']['DASS_21']['Total_Max'] ?? 126 }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                @endif
+                                            @else
+                                                @foreach($result->prediction_data['scores']['DASS_21'] ?? [] as $key => $value)
+                                                    <div class="flex justify-between">
+                                                        <span class="text-sm text-gray-600">{{ $key }}</span>
+                                                        <span class="text-sm font-bold text-green-700">{{ $value }}</span>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @endif
