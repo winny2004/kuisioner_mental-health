@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\DASSPredictionController;
 
 // Landing page
 Route::get('/', function () {
@@ -30,5 +31,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/submit/{type}', [QuizController::class, 'submit'])->name('submit');
         Route::get('/result/{type}', [QuizController::class, 'result'])->name('result');
         Route::get('/history', [QuizController::class, 'history'])->name('history');
+    });
+
+    // ML Prediction routes
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::post('/predict', [DASSPredictionController::class, 'predict'])->name('predict');
     });
 });

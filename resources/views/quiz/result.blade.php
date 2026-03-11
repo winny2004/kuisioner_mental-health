@@ -2,6 +2,46 @@
 
 @section('title', 'Hasil Kuisioner - Mental Health')
 
+@php
+// Define helper function directly in view
+if (!function_exists('getDASS21Label')) {
+    function getDASS21Label($score, $type) {
+        $labels = [
+            'depression' => [
+                [0, 9, 'Normal'],
+                [10, 13, 'Mild (Ringan)'],
+                [14, 20, 'Moderate (Sedang)'],
+                [21, 27, 'Severe (Berat)'],
+                [28, 42, 'Extremely Severe (Sangat Berat)'],
+            ],
+            'anxiety' => [
+                [0, 7, 'Normal'],
+                [8, 9, 'Mild (Ringan)'],
+                [10, 14, 'Moderate (Sedang)'],
+                [15, 19, 'Severe (Berat)'],
+                [20, 42, 'Extremely Severe (Sangat Berat)'],
+            ],
+            'stress' => [
+                [0, 14, 'Normal'],
+                [15, 18, 'Mild (Ringan)'],
+                [19, 25, 'Moderate (Sedang)'],
+                [26, 33, 'Severe (Berat)'],
+                [34, 42, 'Extremely Severe (Sangat Berat)'],
+            ],
+        ];
+
+        $ranges = $labels[$type] ?? [];
+        foreach ($ranges as $range) {
+            if ($score >= $range[0] && $score <= $range[1]) {
+                return $range[2];
+            }
+        }
+
+        return 'Unknown';
+    }
+}
+@endphp
+
 @section('content')
 <div class="min-h-screen py-8 px-4">
     <div class="max-w-4xl mx-auto">
@@ -16,25 +56,82 @@
         <!-- Score Card -->
         <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
             <div class="text-center">
-                <div class="text-6xl mb-4">
-                    {{ $result->category === 'tinggi' ? '🎉' : ($result->category === 'sedang' ? '👍' : '💪') }}
-                </div>
-                <div class="mb-6">
-                    <p class="text-gray-600 mb-2">Skor Total Anda</p>
-                    <p class="text-5xl font-bold text-blue-700">
-                        {{ $result->total_score }} / {{ $result->max_score }}
-                    </p>
-                </div>
+                @if($type === 'family_social' && $result->ml_prediction && is_array($result->ml_prediction) && isset($result->ml_prediction['prediction']))
+                    <!-- ML Prediction Result -->
+                    @php
+                        $prediction = $result->ml_prediction['prediction'] ?? 'Unknown';
+                        $confidence = $result->ml_prediction['confidence'] ?? 0;
+                        $probabilities = $result->ml_prediction['probabilities'] ?? [];
+                    @endphp
 
-                <div class="mb-8">
-                    <p class="text-gray-600 mb-2">Kategori</p>
-                    <span class="inline-block px-8 py-3 rounded-full text-2xl font-bold
-                        {{ $result->category === 'tinggi' ? 'bg-green-100 text-green-700'
-                            : ($result->category === 'sedang' ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700') }}">
-                        {{ $result->getCategoryLabel() }}
-                    </span>
-                </div>
+                    <div class="text-6xl mb-4">
+                        @if($prediction === 'Normal')
+                            😊
+                        @elseif($prediction === 'Depression')
+                            😔
+                        @elseif($prediction === 'Anxiety')
+                            😰
+                        @elseif($prediction === 'Stress')
+                            😫
+                        @else
+                            📊
+                        @endif
+                    </div>
+
+                    <div class="mb-6">
+                        <p class="text-gray-600 mb-2">Hasil Analisis AI</p>
+                        <p class="text-5xl font-bold
+                            {{ $prediction === 'Normal' ? 'text-green-600'
+                                : ($prediction === 'Depression' ? 'text-red-600'
+                                : ($prediction === 'Anxiety' ? 'text-orange-600'
+                                : 'text-yellow-600')) }}">
+                            {{ $prediction }}
+                        </p>
+                        @if($confidence > 0)
+                            <p class="text-lg text-gray-500 mt-2">
+                                Akurasi: {{ round(($confidence * 100), 2) }}%
+                            </p>
+                        @endif
+                    </div>
+
+                    @if(!empty($probabilities) && is_array($probabilities))
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-700 mb-3">Probabilitas Klasifikasi</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                @foreach($probabilities as $label => $prob)
+                                    <div class="bg-gray-50 rounded-lg p-3">
+                                        <p class="text-sm text-gray-600">{{ $label }}</p>
+                                        <p class="text-xl font-bold text-blue-600">{{ round(($prob * 100), 1) }}%</p>
+                                        <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                            <div class="bg-blue-500 h-2 rounded-full" style="width: {{ $prob * 100 }}%"></div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @else
+                    <!-- Regular Score Result -->
+                    <div class="text-6xl mb-4">
+                        {{ $result->category === 'tinggi' ? '🎉' : ($result->category === 'sedang' ? '👍' : '💪') }}
+                    </div>
+                    <div class="mb-6">
+                        <p class="text-gray-600 mb-2">Skor Total Anda</p>
+                        <p class="text-5xl font-bold text-blue-700">
+                            {{ $result->total_score }} / {{ $result->max_score }}
+                        </p>
+                    </div>
+
+                    <div class="mb-8">
+                        <p class="text-gray-600 mb-2">Kategori</p>
+                        <span class="inline-block px-8 py-3 rounded-full text-2xl font-bold
+                            {{ $result->category === 'tinggi' ? 'bg-green-100 text-green-700'
+                                : ($result->category === 'sedang' ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-red-100 text-red-700') }}">
+                            {{ $result->getCategoryLabel() }}
+                        </span>
+                    </div>
+                @endif
 
                 @if($sectionBreakdown)
                     <!-- Section Breakdown -->
@@ -62,6 +159,50 @@
                                 <p class="text-sm text-gray-600">{{ $sectionBreakdown['dass21']['count'] }} pertanyaan</p>
                                 <div class="w-full bg-green-200 rounded-full h-2 mt-2">
                                     <div class="bg-green-500 h-2 rounded-full" style="width: {{ $sectionBreakdown['dass21']['percentage'] }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                @if($type === 'family_social' && $result->dass21_depression !== null)
+                    <!-- DASS-21 Detailed Breakdown -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-bold text-gray-700 mb-4">Analisis DASS-21</h3>
+                        <div class="space-y-4">
+                            <!-- Depression -->
+                            <div class="bg-red-50 rounded-xl p-4 border border-red-200">
+                                <div class="flex justify-between items-center mb-2">
+                                    <p class="text-sm text-gray-700 font-semibold">Depresi</p>
+                                    <span class="text-2xl font-bold text-red-600">{{ $result->dass21_depression }}</span>
+                                </div>
+                                <p class="text-xs text-gray-600 mb-2">{{ getDASS21Label($result->dass21_depression, 'depression') }}</p>
+                                <div class="w-full bg-red-200 rounded-full h-2">
+                                    <div class="bg-red-500 h-2 rounded-full" style="width: {{ min(($result->dass21_depression / 42) * 100, 100) }}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Anxiety -->
+                            <div class="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                                <div class="flex justify-between items-center mb-2">
+                                    <p class="text-sm text-gray-700 font-semibold">Kecemasan</p>
+                                    <span class="text-2xl font-bold text-orange-600">{{ $result->dass21_anxiety }}</span>
+                                </div>
+                                <p class="text-xs text-gray-600 mb-2">{{ getDASS21Label($result->dass21_anxiety, 'anxiety') }}</p>
+                                <div class="w-full bg-orange-200 rounded-full h-2">
+                                    <div class="bg-orange-500 h-2 rounded-full" style="width: {{ min(($result->dass21_anxiety / 42) * 100, 100) }}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Stress -->
+                            <div class="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+                                <div class="flex justify-between items-center mb-2">
+                                    <p class="text-sm text-gray-700 font-semibold">Stres</p>
+                                    <span class="text-2xl font-bold text-yellow-600">{{ $result->dass21_stress }}</span>
+                                </div>
+                                <p class="text-xs text-gray-600 mb-2">{{ getDASS21Label($result->dass21_stress, 'stress') }}</p>
+                                <div class="w-full bg-yellow-200 rounded-full h-2">
+                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ min(($result->dass21_stress / 42) * 100, 100) }}%"></div>
                                 </div>
                             </div>
                         </div>
