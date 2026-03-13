@@ -3,277 +3,192 @@
 @section('title', 'Hasil Kuisioner - Mental Health')
 
 @section('content')
-<div class="min-h-screen py-8 px-4">
-    <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-blue-700 mb-4">Hasil Kuisioner</h1>
-            <p class="text-xl text-blue-600">
-                {{ $type === 'family_social' ? 'Family Social Factor' : 'Self Efficacy' }}
-            </p>
-        </div>
+<div class="min-h-screen py-8 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto flex flex-col gap-6">
+        <section class="flex flex-col bg-sky-800 text-white rounded-lg overflow-hidden shadow-sm">
+            <section class="flex  rounded-md  flex-col ">
+                <p class="px-6 py-2 text-xs flex items-center bg-sky-900">Summary Kuisioner</p>
+                <section class=" px-6 py-4 flex justify-between border-b-[1px] border-dashed gap-2 ">
+                    <section>
+                        <p class="font-semibold text-xl">{{ Auth::user()->name }}</p>
+                        <p class="text-sky-200 text-sm">{{ Auth::user()->getQuizCountByType($result->quiz_type) }}
+                            Kuisoner diambil</p>
 
-        <!-- Score Card -->
-        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-            <div class="text-center">
-                @if($type === 'family_social' && $result->prediction_data)
-                    <!-- AI-based category display -->
+                    </section>
+                    <section>
+                        <p class="text-sky-200 text-xs">{{ $result->completed_at->format('d M Y') }}</p>
+                    </section>
+                </section>
+
+            </section>
+            <section class=" px-6 py-8">
+                <section class="flex flex-col gap-1">
+                    @if($result->prediction_data && isset($result->prediction_data['prediction']))
                     @php
-                        $prediction = $result->prediction_data['prediction'] ?? 'Unknown';
-                        $emoji = match($prediction) {
-                            'Normal' => '😊',
-                            'Depression' => '😔',
-                            'Anxiety' => '😰',
-                            'Stress' => '😓',
-                            default => '📊'
-                        };
-                        $badgeColor = match($prediction) {
-                            'Normal' => 'bg-green-100 text-green-700',
-                            'Depression' => 'bg-blue-100 text-blue-700',
-                            'Anxiety' => 'bg-yellow-100 text-yellow-700',
-                            'Stress' => 'bg-red-100 text-red-700',
-                            default => 'bg-gray-100 text-gray-700'
-                        };
-                        $predictionId = match($prediction) {
-                            'Normal' => 'Normal',
-                            'Depression' => 'Depresi',
-                            'Anxiety' => 'Cemas',
-                            'Stress' => 'Stres',
-                            default => $prediction
-                        };
+                    $prediction = $result->prediction_data['prediction'];
+                    $predictionId = match($prediction) {
+                    'Normal' => 'Normal',
+                    'Depression' => 'Depresi',
+                    'Anxiety' => 'Cemas',
+                    'Stress' => 'Stres',
+                    default => $prediction
+                    };
                     @endphp
-                    <div class="text-6xl mb-4">{{ $emoji }}</div>
-                    <div class="mb-6">
-                        <p class="text-gray-600 mb-2">Hasil Analisis AI</p>
-                        <p class="text-4xl font-bold text-purple-700">{{ $predictionId }}</p>
-                    </div>
-                    <div class="mb-8">
-                        <span class="inline-block px-8 py-3 rounded-full text-2xl font-bold {{ $badgeColor }}">
-                            {{ $predictionId }}
-                        </span>
-                    </div>
-                @else
-                    <!-- Traditional category display -->
-                    <div class="text-6xl mb-4">
-                        {{ $result->category === 'tinggi' ? '🎉' : ($result->category === 'sedang' ? '👍' : '💪') }}
-                    </div>
-                    <div class="mb-6">
-                        <p class="text-gray-600 mb-2">Skor Total Anda</p>
-                        <p class="text-5xl font-bold text-blue-700">
-                            {{ $result->total_score }} / {{ $result->max_score }}
-                        </p>
-                    </div>
-                    <div class="mb-8">
-                        <span class="inline-block px-8 py-3 rounded-full text-2xl font-bold
-                            {{ $result->category === 'tinggi' ? 'bg-green-100 text-green-700'
-                                : ($result->category === 'sedang' ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-red-100 text-red-700') }}">
-                            {{ $result->category === 'tinggi' ? 'Tinggi' : ($result->category === 'sedang' ? 'Sedang' : 'Rendah') }}
-                        </span>
-                    </div>
-                @endif
-
-                @if($sectionBreakdown && $type !== 'family_social')
-                    <!-- Section Breakdown -->
-                    <div class="mb-8">
-                        <h3 class="text-lg font-bold text-gray-700 mb-4">Rincian per Bagian</h3>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <!-- Family Social Section -->
-                            <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                                <p class="text-sm text-gray-600 mb-1">Family Social</p>
-                                <p class="text-2xl font-bold text-blue-700">
-                                    {{ $sectionBreakdown['family_social']['score'] }} / {{ $sectionBreakdown['family_social']['max'] }}
-                                </p>
-                                <p class="text-sm text-gray-600">{{ $sectionBreakdown['family_social']['count'] }} pertanyaan</p>
-                                <div class="w-full bg-blue-200 rounded-full h-2 mt-2">
-                                    <div class="bg-blue-500 h-2 rounded-full" style="width: {{ $sectionBreakdown['family_social']['percentage'] }}%"></div>
-                                </div>
+                    <h2 class="text-4xl font-semibold">{{ $predictionId }}</h2>
+                    <p class="text-sm text-sky-200 mt-1">{{ $type === 'family_social' ? 'Family Social Factor' : 'Self
+                        Efficacy' }}</p>
+                    @else
+                    @php
+                    $categoryLabel = $result->category === 'tinggi' ? 'Tinggi' : ($result->category === 'sedang' ?
+                    'Sedang' : 'Rendah');
+                    @endphp
+                    <h2 class="text-4xl font-semibold">{{ $categoryLabel }}</h2>
+                    <p class="text-sm text-sky-200 mt-1">Skor: {{ $result->total_score }} / {{ $result->max_score }}</p>
+                    @endif
+                </section>
+            </section>
+        </section>
+        {{-- dashboard insight --}}
+        <section class="space-y-6">
+            {{-- Charts Container - Side by Side --}}
+            <div class="grid md:grid-cols-2 gap-6">
+                {{-- Chart MSPSS - Family, Friends, Significant Other --}}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">Skor MSPSS</h3>
+                    <div class="flex items-end justify-center gap-8 px-4" style="height: 200px;">
+                        @if($result->prediction_data && isset($result->prediction_data['scores']['MSPSS']))
+                        @foreach(['Family', 'Friends', 'Significant_Other'] as $key)
+                        @php
+                        $value = $result->prediction_data['scores']['MSPSS'][$key] ?? 0;
+                        $maxValue = 30;
+                        $barHeight = ($value / $maxValue) * 180;
+                        $label = match($key) {
+                        'Family' => 'Keluarga',
+                        'Friends' => 'Teman',
+                        'Significant_Other' => 'Significant Other',
+                        default => $key
+                        };
+                        @endphp
+                        <div class="flex flex-col items-center">
+                            {{-- Value --}}
+                            <div class="mb-2">
+                                <span class="text-sm font-bold text-sky-800">{{ $value }}</span>
                             </div>
+                            {{-- Bar --}}
+                            <div class="w-12 bg-sky-800 rounded-t-lg transition-all duration-500"
+                                style="height: {{ $barHeight }}px; min-height: 4px;"></div>
+                            {{-- X Axis Label --}}
+                            <div class="mt-3 text-center">
+                                <span class="text-xs font-medium text-gray-600">{{ $label }}</span>
+                            </div>
+                        </div>
+                        @endforeach
+                        @endif
+                    </div>
+                </div>
 
-                            <!-- DASS-21 Section -->
-                            <div class="bg-green-50 rounded-xl p-4 border border-green-200">
-                                <p class="text-sm text-gray-600 mb-1">DASS-21</p>
-                                <p class="text-2xl font-bold text-green-700">
-                                    {{ $sectionBreakdown['dass21']['score'] }} / {{ $sectionBreakdown['dass21']['max'] }}
-                                </p>
-                                <p class="text-sm text-gray-600">{{ $sectionBreakdown['dass21']['count'] }} pertanyaan</p>
-                                <div class="w-full bg-green-200 rounded-full h-2 mt-2">
-                                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ $sectionBreakdown['dass21']['percentage'] }}%"></div>
+                {{-- Chart DASS-21 - Depresi, Cemas, Stress --}}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">Skor DASS-21</h3>
+                    <div class="flex items-end justify-center gap-8 px-4" style="height: 200px;">
+                        @if($result->prediction_data && isset($result->prediction_data['categories']))
+                        @foreach(['Depression', 'Anxiety', 'Stress'] as $condition)
+                        @if(isset($result->prediction_data['categories'][$condition]))
+                        @php
+                        $data = $result->prediction_data['categories'][$condition];
+                        $label = match($condition) {
+                        'Depression' => 'Depresi',
+                        'Anxiety' => 'Cemas',
+                        'Stress' => 'Stres',
+                        default => $condition
+                        };
+                        $maxScore = 42;
+                        $barHeight = ($data['score'] / $maxScore) * 180;
+                        @endphp
+                        <div class="flex flex-col items-center">
+                            {{-- Value --}}
+                            <div class="mb-2">
+                                <span class="text-sm font-bold text-green-600">{{ $data['score'] }}</span>
+                            </div>
+                            {{-- Bar --}}
+                            <div class="w-12 bg-green-500 rounded-t-lg transition-all duration-500"
+                                style="height: {{ $barHeight }}px; min-height: 4px;"></div>
+                            {{-- X Axis Label --}}
+                            <div class="mt-3 text-center">
+                                <span class="text-xs font-medium text-gray-600">{{ $label }}</span>
+                            </div>
+                        </div>
+                        @endif
+                        @endforeach
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- history kuis --}}
+            @php
+            // Get history data dengan pagination - ambil SEMUA kuis dengan tipe yang sama KECUALI current result
+            $historyPaginator = \App\Models\QuizResult::where('user_id', Auth::id())
+                ->where('quiz_type', $result->quiz_type)
+                ->where('id', '!=', $result->id) // Exclude current result
+                ->latest('completed_at')
+                ->paginate(5, ['*'], 'history_page');
+            @endphp
+
+            @if($historyPaginator->count() > 0)
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Riwayat Kuisioner Terakhir</h3>
+                <div class="space-y-3">
+                    @foreach($historyPaginator as $historyItem)
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-sky-50 transition">
+                        <div class="flex items-center gap-4">
+                            {{-- Icon dan Type --}}
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">{{ $historyItem->icon }}</span>
+                                <div>
+                                    <p class="font-medium text-gray-800">{{ $historyItem->type_label }}</p>
+                                    <p class="text-sm text-gray-500">{{ $historyItem->formatted_date }}</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                @endif
 
-                @if($result->prediction_data)
-                    <!-- AI Prediction Section -->
-                    <div class="mb-8">
-                        <h3 class="text-lg font-bold text-gray-700 mb-4">🤖 Analisis AI</h3>
-                        <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-200">
-                            <div class="text-center mb-4">
-                                <p class="text-gray-600 mb-2">Prediksi Mental Health</p>
-                                <p class="text-3xl font-bold text-purple-700">
-                                    {{ $result->prediction_data['prediction'] ?? 'N/A' }}
-                                </p>
-                            </div>
-
-                            @if(isset($result->prediction_data['confidence']))
-                                <div class="mb-4">
-                                    <p class="text-sm text-gray-600 mb-2">Confidence Scores:</p>
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                        @foreach($result->prediction_data['confidence'] as $label => $confidence)
-                                            <div class="bg-white rounded-lg p-2 text-center">
-                                                <p class="text-xs text-gray-600">{{ $label }}</p>
-                                                <p class="text-lg font-bold text-purple-700">{{ $confidence }}</p>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if(isset($result->prediction_data['scores']))
-                                <div class="grid md:grid-cols-2 gap-4">
-                                    <!-- MSPSS Scores -->
-                                    <div class="bg-white rounded-lg p-4">
-                                        <p class="text-sm font-bold text-blue-700 mb-2">Skor MSPSS</p>
-                                        <div class="space-y-1">
-                                            @foreach($result->prediction_data['scores']['MSPSS'] ?? [] as $key => $value)
-                                                @php
-                                                    $keyTranslated = match($key) {
-                                                        'Significant_Other' => 'Significant Other',
-                                                        'Family' => 'Keluarga',
-                                                        'Friends' => 'Teman',
-                                                        'Total' => 'Total',
-                                                        default => str_replace('_', ' ', $key)
-                                                    };
-                                                @endphp
-                                                <div class="flex justify-between">
-                                                    <span class="text-sm text-gray-600">{{ $keyTranslated }}</span>
-                                                    <span class="text-sm font-bold text-blue-700">{{ $value }}</span>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-
-                                    <!-- DASS-21 Scores -->
-                                    <div class="bg-white rounded-lg p-4">
-                                        <p class="text-sm font-bold text-green-700 mb-2">Skor DASS-21</p>
-                                        <div class="space-y-2">
-                                            @if(isset($result->prediction_data['categories']))
-                                                @foreach($result->prediction_data['categories'] as $condition => $data)
-                                                    <?php
-                                                    // Translate condition names to Indonesian
-                                                    $conditionId = match($condition) {
-                                                        'Depression' => 'Depresi',
-                                                        'Anxiety' => 'Cemas',
-                                                        'Stress' => 'Stres',
-                                                        default => $condition
-                                                    };
-                                                    ?>
-                                                    <div class="border-b pb-2 last:border-0">
-                                                        <div class="flex justify-between items-center">
-                                                            <span class="text-sm text-gray-600">{{ $conditionId }}</span>
-                                                            <div class="text-right">
-                                                                <span class="text-lg font-bold text-green-700">{{ $data['score'] }}</span>
-                                                                <span class="text-xs text-gray-500 ml-1">
-                                                                    / 42
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="mt-1">
-                                                            <span class="inline-block px-2 py-1 text-xs rounded
-                                                                {{ $data['category_en'] === 'Normal' ? 'bg-green-100 text-green-700'
-                                                                    : ($data['category_en'] === 'Mild' ? 'bg-yellow-100 text-yellow-700'
-                                                                    : ($data['category_en'] === 'Moderate' ? 'bg-orange-100 text-orange-700'
-                                                                    : ($data['category_en'] === 'Severe' ? 'bg-red-100 text-red-700'
-                                                                    : 'bg-red-200 text-red-800'))) }}">
-                                                                {{ $data['category_id'] }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                                @if(isset($result->prediction_data['scores']['DASS_21']['Total']))
-                                                <div class="mt-2 pt-2 border-t">
-                                                    <div class="flex justify-between items-center">
-                                                        <span class="text-sm font-bold text-gray-700">Total DASS</span>
-                                                        <span class="text-sm">
-                                                            {{ $result->prediction_data['scores']['DASS_21']['Total'] }}
-                                                            / {{ $result->prediction_data['scores']['DASS_21']['Total_Max'] ?? 126 }}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                @endif
-                                            @else
-                                                @foreach($result->prediction_data['scores']['DASS_21'] ?? [] as $key => $value)
-                                                    <div class="flex justify-between">
-                                                        <span class="text-sm text-gray-600">{{ $key }}</span>
-                                                        <span class="text-sm font-bold text-green-700">{{ $value }}</span>
-                                                    </div>
-                                                @endforeach
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
+                        {{-- Hasil --}}
+                        <div class="flex items-center gap-4">
+                            <span class="px-4 py-2 rounded-full text-sm font-semibold text-center min-w-24
+                                {{ $historyItem->history_category === 'tinggi' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                {{ $historyItem->history_result }}
+                            </span>
+                            <a href="{{ route('quiz.resultById', ['id' => $historyItem->id, 'type' => $historyItem->quiz_type]) }}"
+                               class="text-sky-600 hover:text-sky-700 font-semibold text-sm whitespace-nowrap">
+                                Lihat →
+                            </a>
                         </div>
                     </div>
+                    @endforeach
+                </div>
+
+                {{-- Pagination --}}
+                @if($historyPaginator->hasPages())
+                <div class="mt-4 flex justify-center">
+                    {{ $historyPaginator->appends(['page' => request()->page])->links() }}
+                </div>
                 @endif
-
-                <div class="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                    <p class="text-lg text-blue-800">
-                        {{ $result->feedback }}
-                    </p>
-                </div>
             </div>
-        </div>
-
-        <!-- Progress Bar -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <p class="text-gray-700 mb-3 text-center">Persentase Pencapaian</p>
-            <div class="w-full bg-gray-200 rounded-full h-6">
-                <div class="h-6 rounded-full text-white text-center font-bold flex items-center justify-center
-                    {{ $result->category === 'tinggi' ? 'bg-green-500' 
-                        : ($result->category === 'sedang' ? 'bg-yellow-500' 
-                        : 'bg-red-500') }}"
-                    style="width: {{ ($result->total_score / $result->max_score) * 100 }}%">
-                    {{ number_format(($result->total_score / $result->max_score) * 100, 1) }}%
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="grid md:grid-cols-2 gap-4 mb-8">
-            <a href="{{ route('quiz.start', $type) }}" class="block bg-blue-500 hover:bg-blue-600 text-white text-center font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-105">
-                Kerjakan Lagi
-            </a>
-            <a href="{{ route('quiz.index') }}" class="block bg-white hover:bg-gray-50 text-blue-600 text-center font-bold py-4 rounded-xl shadow-lg border-2 border-blue-500 transition transform hover:scale-105">
-                Pilih Kuisioner Lain
-            </a>
-        </div>
-
-        <!-- Tips Section -->
-        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-            <h3 class="text-xl font-bold text-blue-700 mb-4">💡 Rekomendasi</h3>
-            @if($result->category === 'tinggi')
-                <ul class="space-y-2 text-gray-700">
-                    <li>✅ Pertahankan kondisi {{ $type === 'family_social' ? 'hubungan keluarga' : 'kepercayaan diri' }} Anda yang baik</li>
-                    <li>✅ Terus berkomunikasi dengan {{ $type === 'family_social' ? 'keluarga' : 'orang terdekat' }} }</li>
-                    <li>✅ Bagikan pengalaman positif Anda dengan orang lain</li>
-                </ul>
-            @elseif($result->category === 'sedang')
-                <ul class="space-y-2 text-gray-700">
-                    <li>📈 Tingkatkan {{ $type === 'family_social' ? 'komunikasi' : 'keyakinan diri' }} Anda secara bertahap</li>
-                    <li>💬 Diskusikan dengan {{ $type === 'family_social' ? 'keluarga' : 'teman dekat' } } tentang perasaan Anda</li>
-                    <li>🎯 Tetapkan target kecil yang dapat dicapai</li>
-                </ul>
-            @else
-                <ul class="space-y-2 text-gray-700">
-                    <li>🤗 Jangan ragu untuk meminta bantuan profesional</li>
-                    <li>📱 Hubungi hotline dukungan psikologis jika diperlukan</li>
-                    <li>👨‍⚕️ Konsultasikan dengan konselor atau psikolog</li>
-                </ul>
             @endif
-        </div>
+
+            {{-- Action Buttons --}}
+            <div class="grid md:grid-cols-1 gap-4">
+                <a href="{{ route('quiz.start', $result->quiz_type) }}"
+                    class="flex items-center justify-center gap-2 bg-sky-700 hover:bg-sky-800 text-white font-semibold py-4 px-6 rounded-xl shadow-md transition transform hover:scale-[1.01] active:scale-[0.98]">
+                    Kerjakan Lagi
+                </a>
+                <a href="{{ route('home') }}"
+                    class="flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-sky-700 font-semibold py-4 px-6 rounded-xl shadow-md border-2 border-sky-300 transition transform hover:scale-[1.01] active:scale-[0.98]">
+                    Kembali ke Home
+                </a>
+            </div>
+
+        </section>
     </div>
 </div>
 @endsection

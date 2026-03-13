@@ -90,6 +90,7 @@ class QuizController extends Controller
                     $aiPrediction = $predictionData['prediction'] ?? null;
 
                     // Translate AI prediction to Indonesian for category
+                    // Gunakan prediction utama (Stress, Depression, Anxiety, Normal)
                     $categoryMap = [
                         'Normal' => 'Normal',
                         'Depression' => 'Depresi',
@@ -122,7 +123,7 @@ class QuizController extends Controller
             'completed_at' => now(),
         ]);
 
-        return redirect()->route('quiz.result', ['type' => $type])
+        return redirect()->route('quiz.resultById', ['id' => $result->id, 'type' => $type])
             ->with('success', 'Kuisioner berhasil diselesaikan!');
     }
 
@@ -130,13 +131,32 @@ class QuizController extends Controller
     {
         $result = QuizResult::where('user_id', Auth::id())
             ->where('quiz_type', $type)
-            ->latest()
+            ->latest('completed_at')
             ->first();
 
         if (!$result) {
             return redirect()->route('quiz.index');
         }
 
+        return $this->renderResultView($result, $type);
+    }
+
+    public function resultById($id, $type)
+    {
+        $result = QuizResult::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->where('quiz_type', $type)
+            ->first();
+
+        if (!$result) {
+            return redirect()->route('quiz.index');
+        }
+
+        return $this->renderResultView($result, $type);
+    }
+
+    private function renderResultView($result, $type)
+    {
         // Get section breakdown for self_efficacy quiz only
         // For family_social, we use AI prediction data instead
         $sectionBreakdown = null;
@@ -195,6 +215,33 @@ class QuizController extends Controller
             ->paginate(10);
 
         return view('quiz.history', compact('results'));
+    }
+
+    /**
+     * Get quiz history data for API (used in result page)
+     */
+    public function getHistoryData($type = null)
+    {
+        $query = QuizResult::where('user_id', Auth::id());
+
+        if ($type) {
+            $query->where('quiz_type', $type);
+        }
+
+        return $query->latest()->limit(10)->get()->map(function ($result) {
+            return [
+                'id' => $result->id,
+                'date' => $result->formatted_date,
+                'time' => $result->formatted_time,
+                'datetime' => $result->formatted_datetime,
+                'type' => $result->quiz_type,
+                'type_label' => $result->type_label,
+                'icon' => $result->icon,
+                'result' => $result->category,
+                'result_label' => $result->history_result,
+                'category' => $result->history_category,
+            ];
+        });
     }
 
     private function getTypeLabel($type)

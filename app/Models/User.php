@@ -45,4 +45,30 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get all quiz results for this user
+     */
+    public function quizResults()
+    {
+        return $this->hasMany(\App\Models\QuizResult::class);
+    }
+
+    /**
+     * Count quiz attempts by type
+     */
+    public function getQuizCountByType($type)
+    {
+        return $this->quizResults()
+            ->where('quiz_type', $type)
+            ->count();
+    }
+
+    /**
+     * Get total quiz count (all types)
+     */
+    public function getTotalQuizCount()
+    {
+        return $this->quizResults()->count();
+    }
 }

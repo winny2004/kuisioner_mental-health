@@ -32,4 +32,74 @@ class QuizResult extends Model
             default => 'Unknown',
         };
     }
+
+    /**
+     * Get formatted date for history
+     */
+    public function getFormattedDateAttribute(): string
+    {
+        return $this->completed_at->format('d M Y');
+    }
+
+    /**
+     * Get formatted time for history
+     */
+    public function getFormattedTimeAttribute(): string
+    {
+        return $this->completed_at->format('H:i');
+    }
+
+    /**
+     * Get formatted date and time for display
+     */
+    public function getFormattedDateTimeAttribute(): string
+    {
+        return $this->completed_at->format('d M Y, H:i');
+    }
+
+    /**
+     * Get icon based on quiz type
+     */
+    public function getIconAttribute(): string
+    {
+        return match($this->quiz_type) {
+            'family_social' => '👨‍👩‍👧‍👦',
+            'self_efficacy' => '💪',
+            default => '📝',
+        };
+    }
+
+    /**
+     * Get type label
+     */
+    public function getTypeLabelAttribute(): string
+    {
+        return match($this->quiz_type) {
+            'family_social' => 'Family Social Factor',
+            'self_efficacy' => 'Self Efficacy Factor',
+            default => 'Unknown',
+        };
+    }
+
+    /**
+     * Get category for history (abnormal or tinggi)
+     */
+    public function getHistoryCategoryAttribute(): string
+    {
+        // Jika category adalah Normal/tinggi/Depresi/Cemas/Stres langsung
+        return match($this->category) {
+            'Normal', 'tinggi' => 'tinggi',
+            'sedang', 'rendah' => 'abnormal',
+            'Depresi', 'Cemas', 'Stres' => 'abnormal',
+            default => 'abnormal',
+        };
+    }
+
+    /**
+     * Get display result for history (use category name)
+     */
+    public function getHistoryResultAttribute(): string
+    {
+        return $this->category;
+    }
 }

@@ -29,6 +29,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/start/{type}', [QuizController::class, 'start'])->name('start');
         Route::post('/submit/{type}', [QuizController::class, 'submit'])->name('submit');
         Route::get('/result/{type}', [QuizController::class, 'result'])->name('result');
+        Route::get('/result/{id}/{type}', [QuizController::class, 'resultById'])->name('resultById');
         Route::get('/history', [QuizController::class, 'history'])->name('history');
+        Route::get('/history-data/{type?}', [QuizController::class, 'getHistoryData'])->name('historyData');
     });
 });
