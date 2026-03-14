@@ -21,7 +21,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-500 text-sm">Kuisioner Selesai</p>
-                        <p class="text-3xl font-bold text-blue-700">0</p>
+                        <p class="text-3xl font-bold text-blue-700">{{ $totalQuizCount }}</p>
                     </div>
                     <div class="text-blue-500 text-4xl">📝</div>
                 </div>
@@ -31,7 +31,21 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-500 text-sm">Status Mental</p>
-                        <p class="text-xl font-bold text-green-700">Belum Diketahui</p>
+                        @if($latestResult && $latestResult->prediction_data && isset($latestResult->prediction_data['prediction']))
+                            @php
+                                $prediction = $latestResult->prediction_data['prediction'];
+                                $predictionLabel = match($prediction) {
+                                    'Normal' => 'Normal',
+                                    'Depression' => 'Depresi',
+                                    'Anxiety' => 'Cemas',
+                                    'Stress' => 'Stres',
+                                    default => $prediction
+                                };
+                            @endphp
+                            <p class="text-xl font-bold text-green-700">{{ $predictionLabel }}</p>
+                        @else
+                            <p class="text-xl font-bold text-gray-400">Belum Diketahui</p>
+                        @endif
                     </div>
                     <div class="text-green-500 text-4xl">🧠</div>
                 </div>
@@ -41,7 +55,11 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-500 text-sm">Terakhir Tes</p>
-                        <p class="text-xl font-bold text-purple-700">-</p>
+                        @if($latestResult)
+                            <p class="text-xl font-bold text-purple-700">{{ $latestResult->completed_at->format('d M Y') }}</p>
+                        @else
+                            <p class="text-xl font-bold text-gray-400">-</p>
+                        @endif
                     </div>
                     <div class="text-purple-500 text-4xl">📅</div>
                 </div>

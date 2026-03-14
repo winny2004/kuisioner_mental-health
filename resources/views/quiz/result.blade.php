@@ -48,6 +48,15 @@
                 </section>
             </section>
         </section>
+        <!-- reason -->
+          <section class="flex flex-col bg-white text-neutral-800  rounded-lg overflow-hidden shadow-sm">
+            <section class="flex  rounded-md  flex-col ">
+                <p class="px-6 py-2 text-xs flex items-center bg-sky-900 text-white">Penjelasan Hasil</p>
+            </section>
+            <section class=" px-6 py-4 text-sm">
+              <p>{{ $result->prediction_data['explanation'] ?? 'Penjelasan tidak tersedia.' }}</p>
+            </section>
+        </section>
         {{-- dashboard insight --}}
         <section class="space-y-6">
             {{-- Charts Container - Side by Side --}}
@@ -55,7 +64,7 @@
                 {{-- Chart MSPSS - Family, Friends, Significant Other --}}
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">Skor MSPSS</h3>
-                    <div class="flex items-end justify-center gap-8 px-4" style="height: 200px;">
+                    <div class="flex items-end justify-center gap-8 px-4" style="height: 240px;">
                         @if($result->prediction_data && isset($result->prediction_data['scores']['MSPSS']))
                         @foreach(['Family', 'Friends', 'Significant_Other'] as $key)
                         @php
@@ -90,7 +99,7 @@
                 {{-- Chart DASS-21 - Depresi, Cemas, Stress --}}
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">Skor DASS-21</h3>
-                    <div class="flex items-end justify-center gap-8 px-4" style="height: 200px;">
+                    <div class="flex items-end justify-center gap-8 px-4 " style="height: 260px;">
                         @if($result->prediction_data && isset($result->prediction_data['categories']))
                         @foreach(['Depression', 'Anxiety', 'Stress'] as $condition)
                         @if(isset($result->prediction_data['categories'][$condition]))
@@ -105,7 +114,7 @@
                         $maxScore = 42;
                         $barHeight = ($data['score'] / $maxScore) * 180;
                         @endphp
-                        <div class="flex flex-col items-center">
+                        <div class="flex flex-col items-center ">
                             {{-- Value --}}
                             <div class="mb-2">
                                 <span class="text-sm font-bold text-green-600">{{ $data['score'] }}</span>
