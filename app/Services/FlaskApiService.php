@@ -133,4 +133,85 @@ class FlaskApiService
             default => 'Netral',
         };
     }
+
+    public function transformSelfEfficacyData($answers, $questions)
+    {
+        $data = [];
+
+        // =========================
+        // SELF EFFICACY (10 soal)
+        // =========================
+
+        $seQuestions = $questions
+            ->where('section', 'self_efficacy')
+            ->sortBy('order')
+            ->values();
+
+        foreach ($seQuestions as $index => $question) {
+
+            $score = intval($answers[$question->id] ?? 1);
+
+            $seNumber = $index + 1;
+
+            $data["SE{$seNumber}"] = $score;
+        }
+
+        // =========================
+        // WELL BEING (18 soal)
+        // =========================
+
+        $wbQuestions = $questions
+            ->where('section', 'well_being')
+            ->sortBy('order')
+            ->values();
+
+        $wb = [];
+
+        foreach ($wbQuestions as $index => $question) {
+
+            $score = intval($answers[$question->id] ?? 1);
+
+            $qNumber = $index + 1;
+
+            $wb["Q{$qNumber}"] = $score;
+        }
+
+        // =========================
+        // REVERSE SCORING
+        // =========================
+
+        $reverseItems = [2,3,5,6,7,8,11,13,16,17];
+
+        foreach ($reverseItems as $q) {
+
+            if(isset($wb["Q{$q}"])){
+
+                $wb["Q{$q}"] = 8 - $wb["Q{$q}"];
+            }
+        }
+
+        // =========================
+        // SUBSCALE
+        // =========================
+
+        $data["Autonomy"] =
+            $wb["Q1"] + $wb["Q2"] + $wb["Q3"];
+
+        $data["Environmental_Mastery"] =
+            $wb["Q4"] + $wb["Q5"] + $wb["Q6"];
+
+        $data["Personal_Growth"] =
+            $wb["Q7"] + $wb["Q8"] + $wb["Q9"];
+
+        $data["Positive_Relations"] =
+            $wb["Q10"] + $wb["Q11"] + $wb["Q12"];
+
+        $data["Purpose_in_Life"] =
+            $wb["Q13"] + $wb["Q14"] + $wb["Q15"];
+
+        $data["Self_Acceptance"] =
+            $wb["Q16"] + $wb["Q17"] + $wb["Q18"];
+
+        return $data;
+    }
 }

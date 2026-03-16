@@ -27,10 +27,16 @@
                     @php
                     $prediction = $result->prediction_data['prediction'];
                     $predictionId = match($prediction) {
+                    // FAMILY SOCIAL FACTOR (DASS)
                     'Normal' => 'Normal',
                     'Depression' => 'Depresi',
                     'Anxiety' => 'Cemas',
                     'Stress' => 'Stres',
+
+                    // SELF EFFICACY FACTOR (WELL-BEING)
+                    'high_well_being' => 'High Well-Being',
+                    'low_well_being' => 'Low Well-Being',
+                    
                     default => $prediction
                     };
                     @endphp
@@ -60,6 +66,7 @@
         {{-- dashboard insight --}}
         <section class="space-y-6">
             {{-- Charts Container - Side by Side --}}
+            @if($type === 'family_social')
             <div class="grid md:grid-cols-2 gap-6">
                 {{-- Chart MSPSS - Family, Friends, Significant Other --}}
                 <div class="bg-white rounded-lg shadow-md p-6">
@@ -133,6 +140,58 @@
                     </div>
                 </div>
             </div>
+            @endif
+
+            @if($type === 'self_efficacy')
+
+            <div class="grid md:grid-cols-2 gap-6">
+
+                {{-- Self Efficacy Score --}}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">
+                        Self-Efficacy
+                    </h3>
+
+                    <div class="text-center">
+                        <p class="text-3xl font-bold text-sky-700">
+                            {{ $sectionBreakdown['self_efficacy']['score'] }}
+                        </p>
+
+                        <p class="text-sm text-gray-500">
+                            dari {{ $sectionBreakdown['self_efficacy']['max'] }}
+                        </p>
+
+                        <p class="mt-2 text-gray-600">
+                            {{ round($sectionBreakdown['self_efficacy']['percentage'],1) }}%
+                        </p>
+                    </div>
+                </div>
+
+
+                {{-- Well Being Score --}}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">
+                        Psychological Well-Being
+                    </h3>
+
+                    <div class="text-center">
+                        <p class="text-3xl font-bold text-green-600">
+                            {{ $sectionBreakdown['well_being']['score'] }}
+                        </p>
+
+                        <p class="text-sm text-gray-500">
+                            dari {{ $sectionBreakdown['well_being']['max'] }}
+                        </p>
+
+                        <p class="mt-2 text-gray-600">
+                            {{ round($sectionBreakdown['well_being']['percentage'],1) }}%
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            @endif
 
             {{-- history kuis --}}
             @php

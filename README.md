@@ -266,7 +266,7 @@ GET  /quiz/history            - Quiz history
 1. After login, you'll see quiz options
 2. Choose:
    - **Family Social**: MSPSS + DASS-21 (with AI prediction)
-   - **Self Efficacy**: Self-efficacy + Well-being
+   - **Self Efficacy**: Self-efficacy + Well-being ((with AI prediction))
 
 #### 3. Complete Quiz
 
@@ -295,10 +295,11 @@ GET  /quiz/history            - Quiz history
 - **Confidence Scores**: AI probability per category
 
 **For Self Efficacy Quiz**:
-
-- **Category**: Tinggi/Sedang/Rendah
+Kuisioner ini menganalisis Self-Efficacy dan Psychological Well-Being mahasiswa menggunakan model Machine Learning.
+- **AI Prediction**: high well-being/low well-being
+- **Category**: high well-being (kondisi kesejahteraan psikologis baik)/ low well-being (kondisi kesejahteraan psikologis rendah)
 - **Percentage Score**: X% dari total
-- **Section Breakdown**: Self-efficacy & Well-being scores
+- **Section Breakdown**: Self-efficacy (semua item) & Well-being scores (enam subskala)
 
 #### 5. Quiz History
 
@@ -388,7 +389,7 @@ private function generateAIFeedback($predictionData) {
 3. **Final score** (×2): 0-42 per category
 4. **Total**: 0-126 (42 + 42 + 42)
 
-### Severity Levels
+### Severity Levels Family Social (DASS)
 
 | Condition | Normal | Mild | Moderate | Severe | Extremely Severe |
 |-----------|--------|------|----------|--------|------------------|

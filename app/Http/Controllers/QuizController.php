@@ -111,6 +111,42 @@ class QuizController extends Controller
             }
         }
 
+        if ($type === 'self_efficacy') {
+            try {
+                $flaskService = new FlaskApiService();
+                /* SELF EFFICACY ML */
+                $quizData = $flaskService->transformSelfEfficacyData(
+                    $request->answers,
+                    $questions
+                );
+                $predictionResult = $flaskService->predictMentalHealth($quizData);
+
+                if ($predictionResult['success']) {
+                    $predictionData = $predictionResult['data'];
+                    $aiPrediction = $predictionData['prediction'] ?? null;
+
+                    if ($aiPrediction === 'high_well_being') {
+                        $category = 'High Well-Being';
+                        $feedback =
+                            'Kondisi psychological well-being Anda tergolong tinggi. '
+                            .'Pertahankan aktivitas positif dan hubungan sosial yang baik.';
+                    }
+
+                    if ($aiPrediction === 'low_well_being') {
+                        $category = 'Low Well-Being';
+                        $feedback =
+                            'Kondisi psychological well-being Anda tergolong rendah. '
+                            .'Disarankan meningkatkan aktivitas positif dan dukungan sosial.';
+                    }
+
+                }
+
+            } catch (\Exception $e) {
+                \Log::error('Flask API Error Self-Efficacy: ' . $e->getMessage());
+            }
+
+        }
+
         // Save quiz result
         $result = QuizResult::create([
             'user_id' => Auth::id(),
