@@ -125,19 +125,11 @@ class QuizController extends Controller
                     $predictionData = $predictionResult['data'];
                     $aiPrediction = $predictionData['prediction'] ?? null;
 
-                    if ($aiPrediction === 'high_well_being') {
-                        $category = 'High Well-Being';
-                        $feedback =
-                            'Kondisi psychological well-being Anda tergolong tinggi. '
-                            .'Pertahankan aktivitas positif dan hubungan sosial yang baik.';
+                    if ($aiPrediction) {
+                        $category = $aiPrediction; 
                     }
 
-                    if ($aiPrediction === 'low_well_being') {
-                        $category = 'Low Well-Being';
-                        $feedback =
-                            'Kondisi psychological well-being Anda tergolong rendah. '
-                            .'Disarankan meningkatkan aktivitas positif dan dukungan sosial.';
-                    }
+                    $feedback = $predictionData['explanation'] ?? $feedback;
 
                 }
 

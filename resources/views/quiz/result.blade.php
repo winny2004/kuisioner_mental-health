@@ -146,46 +146,125 @@
 
             <div class="grid md:grid-cols-2 gap-6">
 
-                {{-- Self Efficacy Score --}}
+                {{-- DASHBOARD KATEGORI --}}
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">
-                        Self-Efficacy
+                        Kategori Mental Health
                     </h3>
 
-                    <div class="text-center">
-                        <p class="text-3xl font-bold text-sky-700">
-                            {{ $sectionBreakdown['self_efficacy']['score'] }}
-                        </p>
+                    @php
+                        $confidence = $result->prediction_data['confidence'] ?? [];
+                        $high = ($confidence['high_well_being'] ?? 0) * 100;
+                        $low = ($confidence['low_well_being'] ?? 0) * 100;
+                        $maxValue = max($high, $low, 1);
+                    @endphp
 
-                        <p class="text-sm text-gray-500">
-                            dari {{ $sectionBreakdown['self_efficacy']['max'] }}
-                        </p>
+                    <div class="flex items-end justify-between gap-10" style="width: 130px; margin:auto; height:256px;">
 
-                        <p class="mt-2 text-gray-600">
-                            {{ round($sectionBreakdown['self_efficacy']['percentage'],1) }}%
-                        </p>
+                        {{-- HIGH --}}
+                        <div class="flex flex-col items-center justify-end h-full">
+                            {{-- VALUE --}}
+                            <span class="text-xs font-semibold text-gray-700 mb-1">
+                                {{ round($high, 1) }}%
+                            </span>
+                            {{-- BAR --}}
+                            <div 
+                                style="
+                                    width:50px;
+                                    height: {{ max(($high / $maxValue) * 120, 10) }}px;
+                                    background: #22c55e;
+                                    border-radius: 6px 6px 0 0;
+                                    transition: 0.5s;
+                                ">
+                            </div>
+                            {{-- LABEL --}}
+                            <span class="text-sm font-semibold mt-2">High</span>
+                        </div>
+
+                        {{-- LOW --}}
+                        <div class="flex flex-col items-center justify-end h-full">
+                            {{-- VALUE --}}
+                            <span class="text-xs font-semibold text-gray-700 mb-1">
+                                {{ round($low, 1) }}%
+                            </span>
+                            {{-- BAR --}}
+                            <div 
+                                style="
+                                    width:50px;
+                                    height: {{ max(($low / $maxValue) * 120, 10) }}px;
+                                    background: #ef4444;
+                                    border-radius: 6px 6px 0 0;
+                                    transition: 0.5s;
+                                ">
+                            </div>
+                            {{-- LABEL --}}
+                            <span class="text-sm font-semibold mt-2">Low</span>
+                        </div>
+
                     </div>
                 </div>
 
 
-                {{-- Well Being Score --}}
+                {{-- TOP FEATURE --}}
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">
-                        Psychological Well-Being
+                        Faktor Paling Berpengaruh
                     </h3>
 
-                    <div class="text-center">
-                        <p class="text-3xl font-bold text-green-600">
-                            {{ $sectionBreakdown['well_being']['score'] }}
-                        </p>
+                    <div class="flex items-end justify-center gap-4" style="height: 256px;">
+                        @if(isset($result->prediction_data['top_features']))
 
-                        <p class="text-sm text-gray-500">
-                            dari {{ $sectionBreakdown['well_being']['max'] }}
-                        </p>
+                        @php
+                        $maxValue = max($result->prediction_data['top_features']);
+                        @endphp
 
-                        <p class="mt-2 text-gray-600">
-                            {{ round($sectionBreakdown['well_being']['percentage'],1) }}%
-                        </p>
+                        @foreach($result->prediction_data['top_features'] as $key => $value)
+
+                            @php
+                                $isSE = str_contains($key, 'SE');
+
+                                $max = $isSE ? 4 : 21;
+                                $value = (float) $value;
+                                $height = max(($value / $maxValue) * 120, 8);
+
+                                // warna beda biar kelihatan
+                                $color = $isSE ? 'bg-blue-500' : 'bg-green-500';
+
+                                $label = match($key) {
+                                    'Autonomy' => 'Auto',
+                                    'Environmental_Mastery' => 'Env',
+                                    'Personal_Growth' => 'Growth',
+                                    'Positive_Relations' => 'Relation',
+                                    'Purpose_in_Life' => 'Purpose',
+                                    'Self_Acceptance' => 'Accept',
+                                    default => $key
+                                };
+                            @endphp
+
+                            <div class="flex flex-col items-center">
+                                {{-- VALUE --}}
+                                <span class="text-xs font-bold">{{ $value }}</span>
+
+                                {{-- BAR --}}
+                                <div 
+                                    style="
+                                        width:50px;
+                                        height: {{ $height }}px;
+                                        background: {{ $color === 'bg-blue-500' ? '#3b82f6' : '#10b981' }};
+                                        border-radius: 6px 6px 0 0;
+                                        transition: 0.5s;
+                                    ">
+                                </div>
+
+                                {{-- LABEL --}}
+                                <span class="text-[10px] mt-2 text-center">
+                                    {{ $label }}
+                                </span>
+                            </div>
+
+                        @endforeach
+
+                        @endif
                     </div>
                 </div>
 
