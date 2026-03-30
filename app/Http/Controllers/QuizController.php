@@ -83,7 +83,7 @@ class QuizController extends Controller
             try {
                 $flaskService = new FlaskApiService();
                 $quizData = $flaskService->transformQuizData($request->answers, $questions);
-                $predictionResult = $flaskService->predictMentalHealth($quizData);
+                $predictionResult = $flaskService->predictMentalHealth($type, $quizData);
 
                 if ($predictionResult['success']) {
                     $predictionData = $predictionResult['data'];
@@ -119,7 +119,7 @@ class QuizController extends Controller
                     $request->answers,
                     $questions
                 );
-                $predictionResult = $flaskService->predictMentalHealth($quizData);
+                $predictionResult = $flaskService->predictMentalHealth($type, $quizData);
 
                 if ($predictionResult['success']) {
                     $predictionData = $predictionResult['data'];

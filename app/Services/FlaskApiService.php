@@ -16,14 +16,20 @@ class FlaskApiService
 
     /**
      * Send quiz data to Flask API for prediction
+     * @param string $quizType - 'family_social' or 'self_efficacy'
+     * @param array $quizData
      */
-    public function predictMentalHealth(array $quizData)
+    public function predictMentalHealth(string $quizType, array $quizData)
     {
         try {
-            // DEBUG: Log outgoing request
-            \Log::info('Flask API Request:', $quizData);
+            // Determine which endpoint to use based on quiz type
+            $endpoint = $quizType === 'family_social' ? '/api/dass/predict' : '/api/se/predict';
 
-            $response = Http::timeout(10)->post("{$this->baseUrl}/api/predict", $quizData);
+            // DEBUG: Log outgoing request
+            \Log::info("Flask API Request ({$quizType}):", $quizData);
+            \Log::info("Endpoint: {$this->baseUrl}{$endpoint}");
+
+            $response = Http::timeout(10)->post("{$this->baseUrl}{$endpoint}", $quizData);
 
             // DEBUG: Log response
             \Log::info('Flask API Response Status: ' . $response->status());
